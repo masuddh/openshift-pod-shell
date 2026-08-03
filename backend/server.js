@@ -132,10 +132,6 @@ app.post('/api/login', async (req, res) => {
   console.log(`Login successful, sessionId: ${sessionId}`);
   res.json({ sessionId, openshiftUrl });
 });
-      details: error.message 
-    });
-  }
-});
 
 // Get namespaces
 app.get('/api/namespaces', async (req, res) => {
