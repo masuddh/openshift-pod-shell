@@ -15,7 +15,7 @@ spec:
     - uri:
         prefix: /pod-shell/api
     rewrite:
-      uri: /
+      uri: /api
     route:
     - destination:
         host: openshift-pod-shell-backend.borneo-dev-monitoring.svc.cluster.local
