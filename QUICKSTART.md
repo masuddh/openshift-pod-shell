@@ -21,7 +21,7 @@ Script akan build dan push ke:
 oc login --server=https://api.ocpdev-jkt.adira.co.id:6443
 
 # Switch ke namespace
-oc project borneo-dev-apps
+oc project borneo-dev-monitoring
 
 # Deploy aplikasi
 oc apply -f k8s/deployment.yaml
@@ -49,7 +49,7 @@ oc rollout restart deployment/openshift-pod-shell-frontend
 
 ## Akses Aplikasi
 
-URL: **https://borneo-dev-apps-ocp.adira.co.id/pod-shell/**
+URL: **https://borneo-dev-monitoring-ocp.adira.co.id/pod-shell/**
 
 Login dengan:
 - Token saja (OpenShift URL sudah predefined)

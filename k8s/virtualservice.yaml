@@ -3,10 +3,10 @@ apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: openshift-pod-shell
-  namespace: borneo-dev-apps
+  namespace: borneo-dev-monitoring
 spec:
   hosts:
-  - borneo-dev-apps-ocp.adira.co.id
+  - borneo-dev-monitoring-ocp.adira.co.id
   gateways:
   - istio-system/borneo-dev-gateway
   http:
@@ -18,7 +18,7 @@ spec:
       uri: /api/
     route:
     - destination:
-        host: openshift-pod-shell-backend.borneo-dev-apps.svc.cluster.local
+        host: openshift-pod-shell-backend.borneo-dev-monitoring.svc.cluster.local
         port:
           number: 3001
     timeout: 300s
@@ -31,7 +31,7 @@ spec:
       uri: /
     route:
     - destination:
-        host: openshift-pod-shell-frontend.borneo-dev-apps.svc.cluster.local
+        host: openshift-pod-shell-frontend.borneo-dev-monitoring.svc.cluster.local
         port:
           number: 8081
     timeout: 30s

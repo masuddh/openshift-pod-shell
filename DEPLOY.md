@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-1. Access to OpenShift cluster (borneo-dev-apps namespace)
+1. Access to OpenShift cluster (borneo-dev-monitoring namespace)
 2. Container images pushed to registry (GitHub Container Registry)
 3. Istio gateway configured (borneo-dev-gateway)
 
@@ -28,8 +28,8 @@ docker push ghcr.io/masuddh/openshift-pod-shell-frontend:latest
 # Login to OpenShift
 oc login --server=https://api.ocpdev-jkt.adira.co.id:6443
 
-# Switch to borneo-dev-apps namespace
-oc project borneo-dev-apps
+# Switch to borneo-dev-monitoring namespace
+oc project borneo-dev-monitoring
 
 # Apply deployments and services
 oc apply -f k8s/deployment.yaml
@@ -63,7 +63,7 @@ curl http://localhost:8081/health
 
 Open browser and navigate to:
 ```
-https://borneo-dev-apps-ocp.adira.co.id/pod-shell/
+https://borneo-dev-monitoring-ocp.adira.co.id/pod-shell/
 ```
 
 ## Update Application
@@ -115,8 +115,8 @@ oc get gateway -n istio-system borneo-dev-gateway
 ```bash
 # From within the cluster
 oc run -it --rm debug --image=curlimages/curl --restart=Never -- sh
-curl http://openshift-pod-shell-backend.borneo-dev-apps.svc.cluster.local:3001/health
-curl http://openshift-pod-shell-frontend.borneo-dev-apps.svc.cluster.local:8081/health
+curl http://openshift-pod-shell-backend.borneo-dev-monitoring.svc.cluster.local:3001/health
+curl http://openshift-pod-shell-frontend.borneo-dev-monitoring.svc.cluster.local:8081/health
 ```
 
 ## RBAC Requirements
@@ -141,7 +141,7 @@ oc get gateway -n istio-system borneo-dev-gateway
 ```
 
 ### DNS
-Ensure `borneo-dev-apps-ocp.adira.co.id` points to Istio ingress gateway.
+Ensure `borneo-dev-monitoring-ocp.adira.co.id` points to Istio ingress gateway.
 
 ## Security Notes
 
