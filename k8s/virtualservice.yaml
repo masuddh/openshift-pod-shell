@@ -22,7 +22,6 @@ spec:
         port:
           number: 3001
     timeout: 300s
-    websocketUpgrade: true
     
   # Frontend static files
   - match:
