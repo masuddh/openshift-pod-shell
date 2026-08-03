@@ -1,0 +1,44 @@
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: openshift-pod-shell
+  namespace: borneo-dev-apps
+spec:
+  hosts:
+  - borneo-dev-apps-ocp.adira.co.id
+  gateways:
+  - istio-system/borneo-dev-gateway
+  http:
+  # Backend API routes
+  - match:
+    - uri:
+        prefix: /pod-shell/api/
+    rewrite:
+      uri: /api/
+    route:
+    - destination:
+        host: openshift-pod-shell-backend.borneo-dev-apps.svc.cluster.local
+        port:
+          number: 3001
+    timeout: 300s
+    
+  # Frontend static files
+  - match:
+    - uri:
+        prefix: /pod-shell/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: openshift-pod-shell-frontend.borneo-dev-apps.svc.cluster.local
+        port:
+          number: 8081
+    timeout: 30s
+    
+  # Default route for /pod-shell without trailing slash
+  - match:
+    - uri:
+        exact: /pod-shell
+    redirect:
+      uri: /pod-shell/

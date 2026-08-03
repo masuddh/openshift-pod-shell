@@ -2,6 +2,28 @@
 
 A lightweight web application for accessing OpenShift pod terminals directly from your browser.
 
+## Quick Start
+
+### Production Deployment (OpenShift + Istio)
+```bash
+# Deploy to OpenShift cluster
+./deploy.sh
+
+# Or manually follow steps in DEPLOY.md
+```
+
+See [DEPLOY.md](DEPLOY.md) for detailed deployment instructions.
+
+### Local Development
+```bash
+# Start with Docker Compose
+docker-compose up -d
+
+# Access at http://localhost:8081/login.html
+```
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for development setup.
+
 ## Features
 
 - 🔐 **Flexible Authentication**: Login using OpenShift token or username/password

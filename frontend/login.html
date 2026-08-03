@@ -87,7 +87,11 @@
   </style>
 
   <script>
-    const API_URL = 'http://localhost:3001';
+    // Auto-detect API URL based on environment
+    const API_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3001'
+      : `${window.location.protocol}//${window.location.host}/pod-shell/api`;
+    
     let currentAuthMethod = 'token';
 
     // Tab switching

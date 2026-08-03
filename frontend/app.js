@@ -1,5 +1,11 @@
-const API_URL = 'http://localhost:3001';
-const WS_URL = 'ws://localhost:3001';
+// Auto-detect API URL based on environment
+const isLocal = window.location.hostname === 'localhost';
+const API_URL = isLocal 
+  ? 'http://localhost:3001'
+  : `${window.location.protocol}//${window.location.host}/pod-shell/api`;
+const WS_URL = isLocal
+  ? 'ws://localhost:3001'
+  : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/pod-shell/api`;
 
 let term = null;
 let socket = null;
