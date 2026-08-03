@@ -269,7 +269,7 @@ wss.on('connection', (ws) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`OpenShift Terminal Backend running on port ${PORT}`);
 });
