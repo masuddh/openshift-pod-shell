@@ -237,6 +237,7 @@ wss.on('connection', (ws) => {
             const WebSocketClient = require('ws');
             
             execWs = new WebSocketClient(wsUrl, {
+              protocol: 'channel.k8s.io',
               headers: {
                 Authorization: `Bearer ${session.token}`
               },
@@ -272,16 +273,19 @@ wss.on('connection', (ws) => {
             });
 
             execWs.on('close', () => {
+              console.log(`Exec WebSocket closed for pod ${pod}`);
               ws.send(JSON.stringify({ type: 'closed' }));
               ws.close();
             });
 
             execWs.on('error', (err) => {
+              console.error('Exec WebSocket error:', err.message);
               ws.send(JSON.stringify({ type: 'error', message: err.message }));
             });
 
             break;
           } catch (err) {
+            console.error(`Failed to connect with ${shell}:`, err.message);
             if (shell === shells[shells.length - 1]) {
               throw err;
             }
@@ -289,6 +293,7 @@ wss.on('connection', (ws) => {
         }
 
         if (!connected) {
+          console.error('Failed to connect to pod after trying all shells');
           ws.send(JSON.stringify({ type: 'error', message: 'Failed to connect to pod' }));
           ws.close();
         }
