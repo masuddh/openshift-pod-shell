@@ -96,6 +96,10 @@ spec:
     spec:
       imagePullSecrets:
       - name: harbor-secret
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
       containers:
       - name: frontend
         image: registry-colla.adira.co.id/borneo/openshift-pod-shell-frontend:latest
@@ -103,6 +107,10 @@ spec:
         - containerPort: 8081
           name: http
           protocol: TCP
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+          allowPrivilegeEscalation: false
         resources:
           requests:
             memory: "64Mi"
