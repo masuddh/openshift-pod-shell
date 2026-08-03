@@ -4,7 +4,7 @@ A lightweight web application for accessing OpenShift pod terminals directly fro
 
 ## Features
 
-- 🔐 **Secure Authentication**: Login using your OpenShift username and password
+- 🔐 **Flexible Authentication**: Login using OpenShift token or username/password
 - 🎯 **RBAC Compliant**: Uses your authenticated user's permissions only
 - 🖥️ **Interactive Terminal**: Full-featured terminal with xterm.js
 - 📦 **Minimal Dependencies**: Lightweight implementation with essential libraries only
@@ -130,10 +130,33 @@ Open your browser and navigate to:
 
 ### 1. Login
 
-1. Enter your OpenShift cluster API URL (e.g., `https://api.cluster.example.com:6443`)
-2. Enter your OpenShift username
-3. Enter your OpenShift password
-4. Click **Login**
+The application supports two authentication methods:
+
+#### Method 1: Token Authentication (Recommended)
+
+This is the preferred method, especially for clusters that don't support OAuth challenging client.
+
+1. Get your OpenShift access token:
+   ```bash
+   oc login --server=https://api.your-cluster.com:6443
+   oc whoami -t
+   ```
+2. In the web UI, select **Token** tab
+3. Enter your OpenShift cluster API URL (e.g., `https://api.ocpdev-jkt.adira.co.id:6443`)
+4. Paste your token
+5. Click **Login**
+
+#### Method 2: Username/Password Authentication
+
+Use this if your cluster supports OAuth challenging client.
+
+1. In the web UI, select **Username/Password** tab
+2. Enter your OpenShift cluster API URL
+3. Enter your OpenShift username
+4. Enter your OpenShift password
+5. Click **Login**
+
+**Note**: If you get an "OAuth authentication not supported" error, use token authentication instead.
 
 ### 2. Access a Pod Terminal
 

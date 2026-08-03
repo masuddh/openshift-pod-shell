@@ -29,7 +29,8 @@ openshift-shell/
 
 ## Key Features Implemented
 
-✅ OpenShift OAuth authentication  
+✅ OpenShift token-based authentication (primary)
+✅ OpenShift OAuth authentication (fallback)  
 ✅ Token-based session management  
 ✅ Namespace and pod listing (RBAC-aware)  
 ✅ WebSocket-based terminal streaming  
@@ -37,6 +38,19 @@ openshift-shell/
 ✅ Terminal resize support  
 ✅ Graceful disconnect handling  
 ✅ Session expiry management  
+
+## Authentication Methods
+
+### Token Authentication (Recommended)
+Users provide their OpenShift access token obtained via:
+```bash
+oc whoami -t
+```
+This method works with all OpenShift clusters, including those that disable OAuth challenging client.
+
+### Username/Password Authentication (Fallback)
+Uses OpenShift OAuth challenging client flow. May not work on all clusters due to security policies.
+Returns helpful error message suggesting token authentication if OAuth fails with 403.  
 
 ## Configuration Variables
 
