@@ -236,8 +236,8 @@ wss.on('connection', (ws) => {
             const wsUrl = execUrl.toString().replace('https://', 'wss://');
             const WebSocketClient = require('ws');
             
-            execWs = new WebSocketClient(wsUrl, {
-              protocol: 'channel.k8s.io',
+            // WebSocket subprotocol as second parameter
+            execWs = new WebSocketClient(wsUrl, ['channel.k8s.io'], {
               headers: {
                 Authorization: `Bearer ${session.token}`
               },
