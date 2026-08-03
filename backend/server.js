@@ -35,11 +35,15 @@ app.get('/health', (req, res) => {
 
 // Login endpoint - supports both token and username/password
 app.post('/api/login', async (req, res) => {
-  const { username, password, token, openshiftUrl } = req.body;
+  let { username, password, token, openshiftUrl } = req.body;
 
   if (!openshiftUrl) {
     return res.status(400).json({ error: 'Missing openshiftUrl' });
   }
+
+  // Trim whitespace from token and URL
+  if (token) token = token.trim();
+  openshiftUrl = openshiftUrl.trim();
 
   // Check if we have either token or username/password
   if (!token && (!username || !password)) {
@@ -50,7 +54,7 @@ app.post('/api/login', async (req, res) => {
 
   // If token provided, use it directly
   if (token) {
-    console.log(`Using provided token (length: ${token.length})`);
+    console.log(`Using provided token (length: ${token.length}, first 20 chars: ${token.substring(0, 20)}...)`);
   } else {
     // Try OAuth authentication with username/password
     try {
@@ -104,6 +108,7 @@ app.post('/api/login', async (req, res) => {
   
   // Verify token works
   try {
+    console.log(`Verifying token with: ${openshiftUrl}/api/v1/namespaces`);
     const verifyResponse = await axios.get(`${openshiftUrl}/api/v1/namespaces`, {
       headers: { Authorization: `Bearer ${authToken}` },
       httpsAgent
@@ -111,9 +116,13 @@ app.post('/api/login', async (req, res) => {
     console.log(`Token verification successful, found ${verifyResponse.data.items.length} namespaces`);
   } catch (err) {
     console.error('Token verification failed:', err.message);
+    console.error('Token verification status:', err.response?.status);
+    console.error('Token verification data:', JSON.stringify(err.response?.data, null, 2));
+    console.error('Token verification headers:', JSON.stringify(err.response?.headers, null, 2));
     return res.status(401).json({ 
       error: 'Invalid token or insufficient permissions',
-      details: err.response?.data?.message || err.message
+      details: err.response?.data?.message || err.message,
+      statusCode: err.response?.status
     });
   }
 
