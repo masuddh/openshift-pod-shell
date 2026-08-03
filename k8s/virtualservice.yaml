@@ -10,10 +10,10 @@ spec:
   gateways:
   - istio-system/borneo-dev-gateway
   http:
-  # Backend API routes
+  # Backend API routes (including WebSocket)
   - match:
     - uri:
-        prefix: /pod-shell/api/
+        prefix: /pod-shell/api
     rewrite:
       uri: /
     route:
@@ -22,6 +22,7 @@ spec:
         port:
           number: 3001
     timeout: 300s
+    websocketUpgrade: true
     
   # Frontend static files
   - match:
