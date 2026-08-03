@@ -19,6 +19,8 @@ spec:
         app: openshift-pod-shell
         component: backend
     spec:
+      imagePullSecrets:
+      - name: harbor-secret
       containers:
       - name: backend
         image: registry-colla.adira.co.id/borneo/openshift-pod-shell-backend:latest
@@ -92,6 +94,8 @@ spec:
         app: openshift-pod-shell
         component: frontend
     spec:
+      imagePullSecrets:
+      - name: harbor-secret
       containers:
       - name: frontend
         image: registry-colla.adira.co.id/borneo/openshift-pod-shell-frontend:latest
