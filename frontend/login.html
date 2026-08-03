@@ -10,6 +10,7 @@
   <div class="login-container">
     <div class="login-box">
       <h1>OpenShift Pod Terminal</h1>
+      <p class="cluster-info">Connected to: <strong>OCP Dev Jakarta</strong></p>
       
       <!-- Auth method toggle -->
       <div class="auth-tabs">
@@ -18,17 +19,11 @@
       </div>
 
       <form id="loginForm">
-        <div class="form-group">
-          <label for="openshiftUrl">OpenShift URL</label>
-          <input type="text" id="openshiftUrl" placeholder="https://api.ocpdev-jkt.adira.co.id:6443" required>
-          <small>Example: https://api.cluster.example.com:6443</small>
-        </div>
-
         <!-- Token authentication (default) -->
         <div id="tokenAuth" class="auth-method">
           <div class="form-group">
             <label for="token">Access Token</label>
-            <input type="password" id="token" placeholder="Paste your token here">
+            <input type="password" id="token" placeholder="Paste your token here" autofocus>
             <small>Get your token with: <code>oc whoami -t</code></small>
           </div>
         </div>
@@ -52,6 +47,15 @@
   </div>
 
   <style>
+    .cluster-info {
+      text-align: center;
+      color: #666;
+      margin: -10px 0 20px 0;
+      font-size: 14px;
+    }
+    .cluster-info strong {
+      color: #0066cc;
+    }
     .auth-tabs {
       display: flex;
       gap: 10px;
@@ -87,6 +91,9 @@
   </style>
 
   <script>
+    // Predefined OpenShift cluster URL
+    const OPENSHIFT_URL = 'https://api.ocpdev-jkt.adira.co.id:6443';
+    
     // Auto-detect API URL based on environment
     const API_URL = window.location.hostname === 'localhost' 
       ? 'http://localhost:3001'
@@ -119,8 +126,7 @@
       const errorDiv = document.getElementById('error');
       errorDiv.textContent = '';
       
-      const openshiftUrl = document.getElementById('openshiftUrl').value;
-      let requestBody = { openshiftUrl };
+      let requestBody = { openshiftUrl: OPENSHIFT_URL };
 
       if (currentAuthMethod === 'token') {
         const token = document.getElementById('token').value;

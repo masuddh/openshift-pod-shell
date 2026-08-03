@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: ghcr.io/masuddh/openshift-pod-shell-backend:latest
+        image: registry-colla.adira.co.id/borneo/openshift-pod-shell-backend:latest
         ports:
         - containerPort: 3001
           name: http
@@ -94,7 +94,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: ghcr.io/masuddh/openshift-pod-shell-frontend:latest
+        image: registry-colla.adira.co.id/borneo/openshift-pod-shell-frontend:latest
         ports:
         - containerPort: 8081
           name: http
