@@ -108,17 +108,17 @@ app.post('/api/login', async (req, res) => {
   
   // Verify token works
   try {
-    console.log(`Verifying token with: ${openshiftUrl}/api/v1/namespaces`);
-    const verifyResponse = await axios.get(`${openshiftUrl}/api/v1/namespaces`, {
+    console.log(`Verifying token with OpenShift projects API`);
+    // Use OpenShift projects API instead of namespaces - it returns only accessible projects
+    const verifyResponse = await axios.get(`${openshiftUrl}/apis/project.openshift.io/v1/projects`, {
       headers: { Authorization: `Bearer ${authToken}` },
       httpsAgent
     });
-    console.log(`Token verification successful, found ${verifyResponse.data.items.length} namespaces`);
+    console.log(`Token verification successful, user has access to ${verifyResponse.data.items.length} projects`);
   } catch (err) {
     console.error('Token verification failed:', err.message);
     console.error('Token verification status:', err.response?.status);
     console.error('Token verification data:', JSON.stringify(err.response?.data, null, 2));
-    console.error('Token verification headers:', JSON.stringify(err.response?.headers, null, 2));
     return res.status(401).json({ 
       error: 'Invalid token or insufficient permissions',
       details: err.response?.data?.message || err.message,
@@ -142,7 +142,7 @@ app.post('/api/login', async (req, res) => {
   res.json({ sessionId, openshiftUrl });
 });
 
-// Get namespaces
+// Get namespaces (projects)
 app.get('/api/namespaces', async (req, res) => {
   const sessionId = req.headers['x-session-id'];
   const session = activeTokens.get(sessionId);
@@ -152,15 +152,18 @@ app.get('/api/namespaces', async (req, res) => {
   }
 
   try {
-    const response = await axios.get(`${session.openshiftUrl}/api/v1/namespaces`, {
+    // Use OpenShift projects API to get only accessible projects
+    const response = await axios.get(`${session.openshiftUrl}/apis/project.openshift.io/v1/projects`, {
       headers: { Authorization: `Bearer ${session.token}` },
       httpsAgent
     });
 
-    const namespaces = response.data.items.map(ns => ns.metadata.name);
+    const namespaces = response.data.items.map(project => project.metadata.name);
+    console.log(`Found ${namespaces.length} accessible projects for session ${sessionId}`);
     res.json(namespaces);
   } catch (error) {
     console.error('Namespaces error:', error.message);
+    console.error('Namespaces error details:', error.response?.data);
     res.status(500).json({ error: 'Failed to fetch namespaces' });
   }
 });
