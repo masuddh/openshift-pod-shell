@@ -6,8 +6,12 @@ COPY *.html /usr/share/nginx/html/
 COPY *.css /usr/share/nginx/html/
 COPY *.js /usr/share/nginx/html/
 
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Remove ALL default nginx configs and copy our custom configuration
+RUN rm -f /etc/nginx/conf.d/*.conf
+COPY nginx.conf /etc/nginx/conf.d/app.conf
+
+# Verify nginx config is valid
+RUN nginx -t
 
 # Expose port
 EXPOSE 8081
