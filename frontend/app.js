@@ -2,7 +2,7 @@
 const isLocal = window.location.hostname === 'localhost';
 const API_URL = isLocal 
   ? 'http://localhost:3001'
-  : `${window.location.protocol}//${window.location.host}/pod-shell/api`;
+  : `${window.location.protocol}//${window.location.host}/pod-shell`;
 const WS_URL = isLocal
   ? 'ws://localhost:3001'
   : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/pod-shell/api`;
