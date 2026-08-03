@@ -45,31 +45,55 @@ app.post('/api/login', async (req, res) => {
     // Authenticate with OpenShift OAuth
     const authUrl = `${openshiftUrl}/oauth/authorize?client_id=openshift-challenging-client&response_type=token`;
     
+    console.log(`Attempting login to: ${authUrl}`);
+    
     const response = await axios.get(authUrl, {
       auth: { username, password },
       httpsAgent,
       maxRedirects: 0,
-      validateStatus: (status) => status === 302
+      validateStatus: (status) => status === 302 || status === 401 || status === 403
     });
+
+    console.log(`OAuth response status: ${response.status}`);
+    console.log(`OAuth response headers:`, response.headers);
+
+    // Check if we got a redirect (successful auth)
+    if (response.status !== 302) {
+      console.error(`Expected 302 redirect but got ${response.status}`);
+      return res.status(401).json({ 
+        error: 'Authentication failed',
+        details: `OAuth server returned status ${response.status}`
+      });
+    }
 
     // Extract token from redirect URL
     const location = response.headers.location;
+    if (!location) {
+      console.error('No location header in OAuth response');
+      return res.status(401).json({ error: 'Authentication failed - no redirect' });
+    }
+
+    console.log(`Redirect location: ${location}`);
     const tokenMatch = location.match(/access_token=([^&]+)/);
     
     if (!tokenMatch) {
-      return res.status(401).json({ error: 'Authentication failed' });
+      console.error('No access token found in redirect URL');
+      return res.status(401).json({ error: 'Authentication failed - no token in response' });
     }
 
     const token = tokenMatch[1];
+    console.log(`Token obtained, length: ${token.length}`);
     
     // Verify token works
     try {
-      await axios.get(`${openshiftUrl}/api/v1/namespaces`, {
+      const verifyResponse = await axios.get(`${openshiftUrl}/api/v1/namespaces`, {
         headers: { Authorization: `Bearer ${token}` },
         httpsAgent
       });
+      console.log(`Token verification successful, found ${verifyResponse.data.items.length} namespaces`);
     } catch (err) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      console.error('Token verification failed:', err.message);
+      return res.status(401).json({ error: 'Invalid credentials or insufficient permissions' });
     }
 
     // Store token temporarily (expires with session)
@@ -84,10 +108,18 @@ app.post('/api/login', async (req, res) => {
       }
     }
 
+    console.log(`Login successful for user: ${username}, sessionId: ${sessionId}`);
     res.json({ sessionId, openshiftUrl });
   } catch (error) {
     console.error('Login error:', error.message);
-    res.status(401).json({ error: 'Authentication failed' });
+    if (error.response) {
+      console.error('Error response status:', error.response.status);
+      console.error('Error response data:', error.response.data);
+    }
+    res.status(401).json({ 
+      error: 'Authentication failed',
+      details: error.message 
+    });
   }
 });
 
