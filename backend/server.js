@@ -33,91 +33,105 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
-// Login endpoint
+// Login endpoint - supports both token and username/password
 app.post('/api/login', async (req, res) => {
-  const { username, password, openshiftUrl } = req.body;
+  const { username, password, token, openshiftUrl } = req.body;
 
-  if (!username || !password || !openshiftUrl) {
-    return res.status(400).json({ error: 'Missing required fields' });
+  if (!openshiftUrl) {
+    return res.status(400).json({ error: 'Missing openshiftUrl' });
   }
 
-  try {
-    // Authenticate with OpenShift OAuth
-    const authUrl = `${openshiftUrl}/oauth/authorize?client_id=openshift-challenging-client&response_type=token`;
-    
-    console.log(`Attempting login to: ${authUrl}`);
-    
-    const response = await axios.get(authUrl, {
-      auth: { username, password },
-      httpsAgent,
-      maxRedirects: 0,
-      validateStatus: (status) => status === 302 || status === 401 || status === 403
-    });
+  // Check if we have either token or username/password
+  if (!token && (!username || !password)) {
+    return res.status(400).json({ error: 'Provide either token or username/password' });
+  }
 
-    console.log(`OAuth response status: ${response.status}`);
-    console.log(`OAuth response headers:`, response.headers);
+  let authToken = token;
 
-    // Check if we got a redirect (successful auth)
-    if (response.status !== 302) {
-      console.error(`Expected 302 redirect but got ${response.status}`);
-      return res.status(401).json({ 
-        error: 'Authentication failed',
-        details: `OAuth server returned status ${response.status}`
-      });
-    }
-
-    // Extract token from redirect URL
-    const location = response.headers.location;
-    if (!location) {
-      console.error('No location header in OAuth response');
-      return res.status(401).json({ error: 'Authentication failed - no redirect' });
-    }
-
-    console.log(`Redirect location: ${location}`);
-    const tokenMatch = location.match(/access_token=([^&]+)/);
-    
-    if (!tokenMatch) {
-      console.error('No access token found in redirect URL');
-      return res.status(401).json({ error: 'Authentication failed - no token in response' });
-    }
-
-    const token = tokenMatch[1];
-    console.log(`Token obtained, length: ${token.length}`);
-    
-    // Verify token works
+  // If token provided, use it directly
+  if (token) {
+    console.log(`Using provided token (length: ${token.length})`);
+  } else {
+    // Try OAuth authentication with username/password
     try {
-      const verifyResponse = await axios.get(`${openshiftUrl}/api/v1/namespaces`, {
-        headers: { Authorization: `Bearer ${token}` },
-        httpsAgent
+      const authUrl = `${openshiftUrl}/oauth/authorize?client_id=openshift-challenging-client&response_type=token`;
+      
+      console.log(`Attempting OAuth login to: ${authUrl}`);
+      
+      const response = await axios.get(authUrl, {
+        auth: { username, password },
+        httpsAgent,
+        maxRedirects: 0,
+        validateStatus: (status) => status === 302 || status === 401 || status === 403
       });
-      console.log(`Token verification successful, found ${verifyResponse.data.items.length} namespaces`);
-    } catch (err) {
-      console.error('Token verification failed:', err.message);
-      return res.status(401).json({ error: 'Invalid credentials or insufficient permissions' });
-    }
 
-    // Store token temporarily (expires with session)
-    const sessionId = Math.random().toString(36).substring(7);
-    activeTokens.set(sessionId, { token, openshiftUrl, timestamp: Date.now() });
+      console.log(`OAuth response status: ${response.status}`);
 
-    // Clean up old tokens (older than 8 hours)
-    const eightHoursAgo = Date.now() - (8 * 60 * 60 * 1000);
-    for (const [id, data] of activeTokens.entries()) {
-      if (data.timestamp < eightHoursAgo) {
-        activeTokens.delete(id);
+      // Check if we got a redirect (successful auth)
+      if (response.status !== 302) {
+        console.error(`OAuth failed with status ${response.status}. Try using token instead.`);
+        return res.status(401).json({ 
+          error: 'OAuth authentication not supported by this cluster',
+          suggestion: 'Use token authentication instead. Get token with: oc whoami -t'
+        });
       }
-    }
 
-    console.log(`Login successful for user: ${username}, sessionId: ${sessionId}`);
-    res.json({ sessionId, openshiftUrl });
-  } catch (error) {
-    console.error('Login error:', error.message);
-    if (error.response) {
-      console.error('Error response status:', error.response.status);
-      console.error('Error response data:', error.response.data);
+      // Extract token from redirect URL
+      const location = response.headers.location;
+      if (!location) {
+        console.error('No location header in OAuth response');
+        return res.status(401).json({ error: 'Authentication failed - no redirect' });
+      }
+
+      const tokenMatch = location.match(/access_token=([^&]+)/);
+      
+      if (!tokenMatch) {
+        console.error('No access token found in redirect URL');
+        return res.status(401).json({ error: 'Authentication failed - no token in response' });
+      }
+
+      authToken = tokenMatch[1];
+      console.log(`Token obtained via OAuth, length: ${authToken.length}`);
+    } catch (error) {
+      console.error('OAuth error:', error.message);
+      return res.status(401).json({ 
+        error: 'OAuth authentication failed',
+        suggestion: 'Use token authentication instead. Get token with: oc whoami -t',
+        details: error.message 
+      });
     }
-    res.status(401).json({ 
-      error: 'Authentication failed',
+  }
+  
+  // Verify token works
+  try {
+    const verifyResponse = await axios.get(`${openshiftUrl}/api/v1/namespaces`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+      httpsAgent
+    });
+    console.log(`Token verification successful, found ${verifyResponse.data.items.length} namespaces`);
+  } catch (err) {
+    console.error('Token verification failed:', err.message);
+    return res.status(401).json({ 
+      error: 'Invalid token or insufficient permissions',
+      details: err.response?.data?.message || err.message
+    });
+  }
+
+  // Store token temporarily (expires with session)
+  const sessionId = Math.random().toString(36).substring(7);
+  activeTokens.set(sessionId, { token: authToken, openshiftUrl, timestamp: Date.now() });
+
+  // Clean up old tokens (older than 8 hours)
+  const eightHoursAgo = Date.now() - (8 * 60 * 60 * 1000);
+  for (const [id, data] of activeTokens.entries()) {
+    if (data.timestamp < eightHoursAgo) {
+      activeTokens.delete(id);
+    }
+  }
+
+  console.log(`Login successful, sessionId: ${sessionId}`);
+  res.json({ sessionId, openshiftUrl });
+});
       details: error.message 
     });
   }

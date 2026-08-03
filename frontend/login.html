@@ -10,28 +10,104 @@
   <div class="login-container">
     <div class="login-box">
       <h1>OpenShift Pod Terminal</h1>
+      
+      <!-- Auth method toggle -->
+      <div class="auth-tabs">
+        <button class="tab-btn active" data-tab="token">Token</button>
+        <button class="tab-btn" data-tab="password">Username/Password</button>
+      </div>
+
       <form id="loginForm">
         <div class="form-group">
           <label for="openshiftUrl">OpenShift URL</label>
-          <input type="text" id="openshiftUrl" placeholder="https://api.cluster.example.com:6443" required>
+          <input type="text" id="openshiftUrl" placeholder="https://api.ocpdev-jkt.adira.co.id:6443" required>
           <small>Example: https://api.cluster.example.com:6443</small>
         </div>
-        <div class="form-group">
-          <label for="username">Username</label>
-          <input type="text" id="username" placeholder="Enter your username" required>
+
+        <!-- Token authentication (default) -->
+        <div id="tokenAuth" class="auth-method">
+          <div class="form-group">
+            <label for="token">Access Token</label>
+            <input type="password" id="token" placeholder="Paste your token here">
+            <small>Get your token with: <code>oc whoami -t</code></small>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" placeholder="Enter your password" required>
+
+        <!-- Username/Password authentication -->
+        <div id="passwordAuth" class="auth-method" style="display: none;">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter your username">
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password">
+          </div>
         </div>
+
         <button type="submit" class="btn-primary">Login</button>
         <div id="error" class="error-message"></div>
       </form>
     </div>
   </div>
 
+  <style>
+    .auth-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      background: #f5f5f5;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.3s;
+    }
+    .tab-btn.active {
+      background: #0066cc;
+      color: white;
+      border-color: #0066cc;
+    }
+    .auth-method {
+      animation: fadeIn 0.3s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+  </style>
+
   <script>
     const API_URL = 'http://localhost:3001';
+    let currentAuthMethod = 'token';
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        currentAuthMethod = tab;
+        
+        // Update active tab
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Show/hide auth methods
+        document.getElementById('tokenAuth').style.display = tab === 'token' ? 'block' : 'none';
+        document.getElementById('passwordAuth').style.display = tab === 'password' ? 'block' : 'none';
+        
+        // Clear error
+        document.getElementById('error').textContent = '';
+      });
+    });
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -39,20 +115,41 @@
       const errorDiv = document.getElementById('error');
       errorDiv.textContent = '';
       
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
       const openshiftUrl = document.getElementById('openshiftUrl').value;
+      let requestBody = { openshiftUrl };
+
+      if (currentAuthMethod === 'token') {
+        const token = document.getElementById('token').value;
+        if (!token) {
+          errorDiv.textContent = 'Please enter your access token';
+          return;
+        }
+        requestBody.token = token;
+      } else {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        if (!username || !password) {
+          errorDiv.textContent = 'Please enter username and password';
+          return;
+        }
+        requestBody.username = username;
+        requestBody.password = password;
+      }
 
       try {
         const response = await fetch(`${API_URL}/api/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, openshiftUrl })
+          body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.error || 'Login failed');
+          let errorMsg = error.error || 'Login failed';
+          if (error.suggestion) {
+            errorMsg += '\n' + error.suggestion;
+          }
+          throw new Error(errorMsg);
         }
 
         const data = await response.json();
