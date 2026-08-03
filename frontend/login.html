@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenShift Pod Terminal - Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <h1>OpenShift Pod Terminal</h1>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="openshiftUrl">OpenShift URL</label>
+          <input type="text" id="openshiftUrl" placeholder="https://api.cluster.example.com:6443" required>
+          <small>Example: https://api.cluster.example.com:6443</small>
+        </div>
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" placeholder="Enter your username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Enter your password" required>
+        </div>
+        <button type="submit" class="btn-primary">Login</button>
+        <div id="error" class="error-message"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000';
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = '';
+      
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const openshiftUrl = document.getElementById('openshiftUrl').value;
+
+      try {
+        const response = await fetch(`${API_URL}/api/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, openshiftUrl })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Login failed');
+        }
+
+        const data = await response.json();
+        
+        // Store session
+        localStorage.setItem('sessionId', data.sessionId);
+        localStorage.setItem('openshiftUrl', data.openshiftUrl);
+        
+        // Redirect to terminal
+        window.location.href = 'index.html';
+      } catch (error) {
+        errorDiv.textContent = error.message;
+      }
+    });
+
+    // Check if already logged in
+    if (localStorage.getItem('sessionId')) {
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
